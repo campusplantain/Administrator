@@ -1,825 +1,780 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Admin Dashboard: Menu & Orders (Admin-only Upload)</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
-            rel="stylesheet"
-        />
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-        <style>
-            html,
-            body {
-                height: 100%;
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            body {
-                position: fixed;
-                inset: 0;
-                width: 100%;
-                height: 100dvh;
-                overflow: hidden;
-                font-family: "Inter", sans-serif;
-                background: #f5f5f7;
-                display: flex;
-                flex-direction: column;
-                padding-bottom: 60px;
-            }
-            header {
-                background: #fff;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-                padding: 1.2rem 2rem;
-                font-size: 1.4rem;
-                color: #ff7043;
-                font-weight: bold;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex-shrink: 0;
-                flex-direction: column;
-            }
-            main {
-                flex: 1 1 auto;
-                width: 100%;
-                overflow-y: auto;
-                overflow-x: hidden;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                box-sizing: border-box;
-                min-height: 0;
-            }
-            .page {
-                display: none;
-                width: 100%;
-                background: #fff;
-                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
-                padding: 2.2rem 2.2rem 1.7rem 2.2rem;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard: Menu & Orders (Admin-only Upload)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+      rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        font-family: "Inter", sans-serif;
+        background: #f5f5f7;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 60px;
+      }
+      header {
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        padding: 1.2rem 2rem;
+        font-size: 1.4rem;
+        color: #ff7043;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        flex-direction: column;
+      }
+      main {
+        flex: 1 1 auto;
+        width: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        box-sizing: border-box;
+        min-height: 0;
+      }
+      .page {
+        display: none;
+        width: 100%;
+        background: #fff;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+        padding: 2.2rem 2.2rem 1.7rem 2.2rem;
 
-                box-sizing: border-box;
-            }
-            .page.active {
-                display: block;
-            }
-            h2 {
-                color: #ff7043;
-                margin-top: 0;
-                font-size: 1.18rem;
-                padding-bottom: 0.3rem;
-                margin: 5px 20px;
-            }
-            .form-row {
-                display: flex;
-                flex-direction: column;
-                gap: 0.6rem;
-                margin-bottom: 1.1rem;
-                padding: 10px 20px;
-            }
-            .form-row label {
-                font-weight: 600;
-                color: #444;
-                margin-bottom: 0.17rem;
-                padding-left: 0.1rem;
-            }
-            .form-row input,
-            .form-row textarea {
-                padding: 0.7rem 0.7rem;
-                border-radius: 10px;
-                border: 1px solid #ddd;
-                font-size: 1rem;
-                background: #fafafc;
-                box-sizing: border-box;
-            }
-            .form-row textarea {
-                resize: vertical;
-                min-height: 54px;
-                max-height: 140px;
-            }
-            .form-row input[type="file"] {
-                padding: 0.2rem;
-                border: none;
-                background: none;
-            }
-            .img-preview {
-                max-width: 140px;
-                max-height: 140px;
-                display: block;
-                border-radius: 10px;
-                margin-bottom: 1.2rem;
-                object-fit: cover;
-                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
-            }
-            button,
-            input[type="submit"] {
-                background: #ff7043;
-                color: #fff;
-                border: none;
-                border-radius: 10px;
-                padding: 0.6rem 1.5rem;
-                font-size: 1.06rem;
-                font-weight: bold;
-                cursor: pointer;
-                margin-top: 0.5rem;
-                transition: background 0.18s;
-                box-shadow: 0 2px 8px rgba(255, 112, 67, 0.08);
-                margin: 5px 20px;
-            }
-            button:hover,
-            input[type="submit"]:hover {
-                background: #ff5722;
-            }
-            .status-message {
-                margin: 1rem 0 0.7rem 0;
-                color: #1b9625;
-                font-weight: 600;
-                font-size: 1.01rem;
-                padding-left: 0.1rem;
-            }
-            .error-message {
-                color: #d32f2f;
-                margin: 0.2rem 0 0.7rem 0;
-                font-size: 0.99rem;
-                font-weight: 500;
-                padding-left: 0.1rem;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 1rem;
-                background: #fff;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-            }
-            th,
-            td {
-                padding: 1em 0.2em;
-                text-align: left;
-                border-bottom: 1px solid #f0eeee;
-                font-size: 1.01rem;
-                vertical-align: top;
-            }
-            th {
-                color: #ff7043;
-                font-weight: 700;
-                background: #faf7f4;
-            }
-            tr:last-child td {
-                border-bottom: none;
-            }
-            .order-items-list {
-                margin: 0.1em 0 0 0.1em;
-                padding-left: 0.5em;
-                font-size: 0.8em;
-                color: #555;
-            }
-            .order-items-list li span {
-                color: #222;
-                font-weight: 600;
-            }
-            .order-total {
-                font-weight: bold;
-                color: #222;
-                font-size: 1.08em;
-            }
-            .order-email {
-                color: #3260d8;
-                font-size: 0.7em;
-                word-break: break-all;
-            }
-            .phone {
-                font-size: 0.7em;
-            }
-            /* ---- Bottom Navigation ---- */
-            .bottom-nav {
-                position: fixed;
-                left: 0;
-                bottom: 0;
-                width: 100vw;
-                background: #fff;
-                border-top: 1.5px solid #eee;
-                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 99;
-                height: 56px;
-                padding: 0 0.5rem;
-                box-sizing: border-box;
-                /* prevent bouncy effect */
-                will-change: transform;
-                transition: none;
-                -webkit-backface-visibility: hidden;
-                backface-visibility: hidden;
-            }
-            .bottom-nav-btn {
-                flex: 1 1 0;
-                text-align: center;
-                color: #888;
-                font-size: 1.13rem;
-                padding: 0.35em 0.3em;
-                cursor: pointer;
-                font-weight: 600;
-                background: none;
-                border: none;
-                outline: none;
-                transition:
-                    color 0.2s,
-                    background 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.36em;
-                border-radius: 9px;
-                height: 100%;
-                margin: 0 0.2em;
-            }
-            .bottom-nav-btn.active,
-            .bottom-nav-btn:hover {
-                color: #ff7043;
-                background: #fff4ef;
-            }
-            .auth-bar {
-                font-size: 1rem;
-                color: #555;
-                display: flex;
-                align-items: center;
-                gap: 1em;
-            }
-            .auth-bar button {
-                padding: 0.3em 1em;
-                margin-top: 0;
-                font-size: 1rem;
-            }
-            .auth-modal {
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.18);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 999;
-            }
-            .auth-modal.active {
-                display: flex;
-            }
-            .auth-box {
-                background: #fff;
-                max-width: 350px;
-                width: 100%;
-                box-shadow: 0 4px 28px rgba(0, 0, 0, 0.18);
+        box-sizing: border-box;
+      }
+      .page.active {
+        display: block;
+      }
+      h2 {
+        color: #ff7043;
+        margin-top: 0;
+        font-size: 1.18rem;
+        padding-bottom: 0.3rem;
+        margin: 5px 20px;
+      }
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1.1rem;
+        padding: 10px 20px;
+      }
+      .form-row label {
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 0.17rem;
+        padding-left: 0.1rem;
+      }
+      .form-row input,
+      .form-row textarea {
+        padding: 0.7rem 0.7rem;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 1rem;
+        background: #fafafc;
+        box-sizing: border-box;
+      }
+      .form-row textarea {
+        resize: vertical;
+        min-height: 54px;
+        max-height: 140px;
+      }
+      .form-row input[type="file"] {
+        padding: 0.2rem;
+        border: none;
+        background: none;
+      }
+      .img-preview {
+        max-width: 140px;
+        max-height: 140px;
+        display: block;
+        border-radius: 10px;
+        margin-bottom: 1.2rem;
+        object-fit: cover;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
+      }
+      button,
+      input[type="submit"] {
+        background: #ff7043;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.6rem 1.5rem;
+        font-size: 1.06rem;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        transition: background 0.18s;
+        box-shadow: 0 2px 8px rgba(255, 112, 67, 0.08);
+        margin: 5px 20px;
+      }
+      button:hover,
+      input[type="submit"]:hover {
+        background: #ff5722;
+      }
+      .status-message {
+        margin: 1rem 0 0.7rem 0;
+        color: #1b9625;
+        font-weight: 600;
+        font-size: 1.01rem;
+        padding-left: 0.1rem;
+      }
+      .error-message {
+        color: #d32f2f;
+        margin: 0.2rem 0 0.7rem 0;
+        font-size: 0.99rem;
+        font-weight: 500;
+        padding-left: 0.1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      }
+      th,
+      td {
+        padding: 1em 0.2em;
+        text-align: left;
+        border-bottom: 1px solid #f0eeee;
+        font-size: 1.01rem;
+        vertical-align: top;
+      }
+      th {
+        color: #ff7043;
+        font-weight: 700;
+        background: #faf7f4;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .order-items-list {
+        margin: 0.1em 0 0 0.1em;
+        padding-left: 0.5em;
+        font-size: 0.8em;
+        color: #555;
+      }
+      .order-items-list li span {
+        color: #222;
+        font-weight: 600;
+      }
+      .order-total {
+        font-weight: bold;
+        color: #222;
+        font-size: 1.08em;
+      }
+      .order-email {
+        color: #3260d8;
+        font-size: 0.7em;
+        word-break: break-all;
+      }
+      .phone {
+        font-size: 0.7em;
+      }
+      /* ---- Bottom Navigation ---- */
+      .bottom-nav {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100vw;
+        background: #fff;
+        border-top: 1.5px solid #eee;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 99;
+        height: 56px;
+        padding: 0 0.5rem;
+        box-sizing: border-box;
+        /* prevent bouncy effect */
+        will-change: transform;
+        transition: none;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      .bottom-nav-btn {
+        flex: 1 1 0;
+        text-align: center;
+        color: #888;
+        font-size: 1.13rem;
+        padding: 0.35em 0.3em;
+        cursor: pointer;
+        font-weight: 600;
+        background: none;
+        border: none;
+        outline: none;
+        transition: color 0.2s, background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.36em;
+        border-radius: 9px;
+        height: 100%;
+        margin: 0 0.2em;
+      }
+      .bottom-nav-btn.active,
+      .bottom-nav-btn:hover {
+        color: #ff7043;
+        background: #fff4ef;
+      }
+      .auth-bar {
+        font-size: 1rem;
+        color: #555;
+        display: flex;
+        align-items: center;
+        gap: 1em;
+      }
+      .auth-bar button {
+        padding: 0.3em 1em;
+        margin-top: 0;
+        font-size: 1rem;
+      }
+      .auth-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.18);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+      }
+      .auth-modal.active {
+        display: flex;
+      }
+      .auth-box {
+        background: #fff;
+        max-width: 350px;
+        width: 100%;
+        box-shadow: 0 4px 28px rgba(0, 0, 0, 0.18);
 
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 10px;
+      }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1em;
+      }
+      .auth-form input[type="email"],
+      .auth-form input[type="password"] {
+        padding: 0.7rem;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        font-size: 1rem;
+      }
+      .auth-form button[type="submit"] {
+        background: #ff7043;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .auth-form button[type="submit"]:hover {
+        background: #ff5722;
+      }
+      .auth-error {
+        color: #d32f2f;
+        font-size: 0.98rem;
+        margin-bottom: 0.6rem;
+        text-align: center;
+      }
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @media (max-width: 1000px) {
+        .page {
+          max-width: 98vw;
+          padding: 1.2rem 0.6rem 0.7rem 0.6rem;
+        }
+      }
+      @media (max-width: 600px) {
+        .page {
+          padding: 0.8rem 0.09em 0.4em 0.09em;
+        }
+        table,
+        th,
+        td {
+          font-size: 0.96em;
+        }
+        .bottom-nav {
+          height: 64px;
+        }
+        .img-preview {
+          max-width: 90vw;
+        }
+      }
+      .not-admin-msg {
+        display: none;
+        color: #d32f2f;
+        font-weight: 600;
+        margin: 1em 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span id="header-title">🍔 Menu</span>
+      <div class="auth-bar" id="auth-bar">
+        <span id="auth-user"></span>
+        <button id="auth-btn">Sign In</button>
+      </div>
+    </header>
+    <main>
+      <!-- Menu Item Page -->
+      <section class="page" id="menu-page">
+        <h2>Add Menu Item</h2>
+        <div class="not-admin-msg" id="not-admin-msg">
+          Only admins can add menu items.
+        </div>
+        <form id="menu-form" autocomplete="off">
+          <div class="form-row">
+            <label for="title">Title *</label>
+            <input type="text" id="title" required maxlength="64" />
+          </div>
+          <div class="form-row">
+            <label for="desc">Description *</label>
+            <textarea id="desc" required maxlength="200"></textarea>
+          </div>
+          <div class="form-row">
+            <label for="price">Price (₵) *</label>
+            <input type="number" min="0" step="0.01" id="price" required />
+          </div>
+          <div class="form-row">
+            <label for="img">Image *</label>
+            <input type="file" id="img" accept="image/*" required />
+            <img id="img-preview" class="img-preview" style="display: none" />
+          </div>
+          <input type="submit" value="Add Menu Item" />
+          <div class="status-message" id="add-status"></div>
+          <div class="error-message" id="add-error"></div>
+        </form>
+      </section>
+      <!-- Orders Page -->
+      <section class="page" id="orders-page">
+        <h2>Customer Orders</h2>
+        <button id="refresh-orders">Refresh Orders</button>
+        <div class="status-message" id="orders-status"></div>
+        <table id="orders-table">
+          <thead>
+            <tr>
+              <th>Date<br />Status<br />Delivered</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #bbb">
+                Loading...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <!-- AUTH MODAL -->
+      <div class="auth-modal" id="auth-modal">
+        <div class="auth-box">
+          <h3 style="margin: 0 0 0.6em 0; color: #ff7043">Admin Sign In</h3>
+          <form id="signin-form" class="auth-form">
+            <input
+              type="email"
+              id="signin-email"
+              placeholder="Email"
+              required
+              autocomplete="username" />
+            <input
+              type="password"
+              id="signin-password"
+              placeholder="Password"
+              required
+              autocomplete="current-password" />
+            <div class="auth-error" id="signin-error"></div>
+            <button type="submit">Sign In</button>
+          </form>
+          <button
+            id="close-auth"
+            style="background: #eee; color: #444; margin-top: 0.6em">
+            Close
+          </button>
+        </div>
+      </div>
+    </main>
+    <nav class="bottom-nav">
+      <button class="bottom-nav-btn active" id="nav-menu" type="button">
+        🍔 Menu
+      </button>
+      <button class="bottom-nav-btn" id="nav-orders" type="button">
+        📦 Orders
+      </button>
+    </nav>
+    <script>
+      // === CONFIGURE SUPABASE ===
+      const SUPABASE_URL = "https://soxfqyzgbkbxpjkvxvvi.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveGZxeXpnYmtieHBqa3Z4dnZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjQ1MTAsImV4cCI6MjA2Mzk0MDUxMH0.kxV61t2xqauvO-wYyUMIrmNUKow99kjG09JdGXjsO6c";
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // === ADMIN EMAILS ===
+      const ADMIN_EMAILS = [
+        "stevejupiter4@gmail.com",
+        "kellyklivert@gmail.com",
+      ];
+
+      let currentUser = null;
+
+      function isAdmin() {
+        return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+      }
+
+      function updateAuthUI() {
+        const userSpan = document.getElementById("auth-user");
+        const authBtn = document.getElementById("auth-btn");
+        const menuForm = document.getElementById("menu-form");
+        const notAdminMsg = document.getElementById("not-admin-msg");
+        if (currentUser) {
+          userSpan.textContent = currentUser.email;
+          authBtn.textContent = "Logout";
+          if (isAdmin()) {
+            menuForm.style.display = "block";
+            notAdminMsg.style.display = "none";
+          } else {
+            menuForm.style.display = "none";
+            notAdminMsg.style.display = "block";
+          }
+        } else {
+          userSpan.textContent = "";
+          authBtn.textContent = "Sign In";
+          menuForm.style.display = "none";
+          notAdminMsg.style.display = "none";
+        }
+      }
+
+      document
+        .getElementById("auth-btn")
+        .addEventListener("click", async () => {
+          if (currentUser) {
+            await supabase.auth.signOut();
+            currentUser = null;
+            updateAuthUI();
+          } else {
+            openAuthModal();
+          }
+        });
+
+      function openAuthModal() {
+        document.getElementById("auth-modal").classList.add("active");
+        document.getElementById("signin-error").textContent = "";
+        document.getElementById("signin-form").reset();
+      }
+      function closeAuthModal() {
+        document.getElementById("auth-modal").classList.remove("active");
+      }
+      document
+        .getElementById("close-auth")
+        .addEventListener("click", closeAuthModal);
+
+      document
+        .getElementById("signin-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const email = document.getElementById("signin-email").value;
+          const password = document.getElementById("signin-password").value;
+          const errorDiv = document.getElementById("signin-error");
+          errorDiv.textContent = "";
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) {
+            errorDiv.textContent = error.message;
+          } else {
+            currentUser = data.user;
+            closeAuthModal();
+            updateAuthUI();
+          }
+        });
+
+      // --- Navigation ---
+      const pages = {
+        menu: document.getElementById("menu-page"),
+        orders: document.getElementById("orders-page"),
+      };
+      const navBtns = {
+        menu: document.getElementById("nav-menu"),
+        orders: document.getElementById("nav-orders"),
+      };
+      function showPage(page) {
+        for (const key in pages) {
+          pages[key].classList.remove("active");
+          navBtns[key].classList.remove("active");
+        }
+        pages[page].classList.add("active");
+        navBtns[page].classList.add("active");
+        document.getElementById("header-title").textContent =
+          page === "menu" ? "🍔 Menu" : "📦 Orders";
+      }
+      navBtns.menu.addEventListener("click", () => showPage("menu"));
+      navBtns.orders.addEventListener("click", () => showPage("orders"));
+      // Default to menu
+      showPage("menu");
+
+      // --- Menu Form: Image Preview ---
+      document.getElementById("img").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById("img-preview");
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            preview.src = evt.target.result;
+            preview.style.display = "block";
+          };
+          reader.readAsDataURL(file);
+        } else {
+          preview.style.display = "none";
+        }
+      });
+
+      // --- Menu Form Submission ---
+      document
+        .getElementById("menu-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          if (!isAdmin()) {
+            document.getElementById("add-error").textContent =
+              "You must be an admin to add menu items.";
+            return;
+          }
+          const title = document.getElementById("title").value.trim();
+          const desc = document.getElementById("desc").value.trim();
+          const price = parseFloat(document.getElementById("price").value);
+          const imgInput = document.getElementById("img");
+          const status = document.getElementById("add-status");
+          const error = document.getElementById("add-error");
+          status.textContent = "";
+          error.textContent = "";
+
+          if (!imgInput.files[0]) {
+            error.textContent = "Image is required.";
+            return;
+          }
+          const file = imgInput.files[0];
+          const fileExt = file.name.split(".").pop();
+          const filePath = `menu/${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 6)}.${fileExt}`;
+
+          // Upload image to Supabase Storage
+          let { data: imgData, error: imgError } = await supabase.storage
+            .from("menu-images")
+            .upload(filePath, file);
+
+          if (imgError) {
+            error.textContent = "Image upload failed: " + imgError.message;
+            return;
+          }
+
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage
+            .from("menu-images")
+            .getPublicUrl(filePath);
+          const imgUrl = publicUrlData.publicUrl;
+
+          // Insert menu item into Supabase table
+          const { error: insertError } = await supabase
+            .from("menu_items")
+            .insert([
+              {
+                title,
+                desc: desc,
+                price,
+                img: imgUrl,
+              },
+            ]);
+          if (insertError) {
+            error.textContent =
+              "Failed to add menu item: " + insertError.message;
+            return;
+          }
+          status.textContent = "Menu item added successfully!";
+          this.reset();
+          document.getElementById("img-preview").style.display = "none";
+          setTimeout(() => {
+            status.textContent = "";
+          }, 1800);
+        });
+
+      // --- Orders Table ---
+      async function loadOrders() {
+        const tbody = document.getElementById("orders-tbody");
+        const status = document.getElementById("orders-status");
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#bbb">Loading...</td></tr>`;
+        status.textContent = "";
+        let { data: orders, error } = await supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) {
+          tbody.innerHTML = `<tr><td colspan="4" style="color:#d32f2f">Failed to load orders.</td></tr>`;
+          status.textContent = error.message;
+          return;
+        }
+        if (!orders || orders.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="color:#aaa">No orders found.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = "";
+        for (const order of orders) {
+          const date = new Date(order.created_at).toLocaleString();
+          const orderStatus = order.status ? order.status : "pending";
+          // Username is the part before '@'
+          let username = "";
+          if (
+            order.email &&
+            typeof order.email === "string" &&
+            order.email.includes("@")
+          ) {
+            username = order.user_display_name;
+          }
+          const customer = `<div style="font-weight:bold;font-size:0.7em;">${
+            username ? username : "???"
+          }</div>
+                <span class="order-email">${order.email || "???"}</span>
+                <span class="phone">${order.user_phone}</span>
+                <span class="location" style="font-size:0.7em; color:#444;">
+                ${order.user_location ? order.user_location : ""}
+                </span>
+                `;
+          let itemsHtml = "<ul class='order-items-list'>";
+          let total = 0;
+          try {
+            const items =
+              typeof order.items === "string"
+                ? JSON.parse(order.items)
+                : order.items;
+            for (const item of items) {
+              itemsHtml += `<li><span>${item.title}</span> x ${item.qty} - ₵${item.price}</li>`;
+              total += item.price * item.qty;
             }
-            .auth-form {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                gap: 1em;
-            }
-            .auth-form input[type="email"],
-            .auth-form input[type="password"] {
-                padding: 0.7rem;
-                border-radius: 8px;
-                border: 1px solid #ddd;
-                font-size: 1rem;
-            }
-            .auth-form button[type="submit"] {
-                background: #ff7043;
-                color: #fff;
-                border: none;
-                border-radius: 8px;
-                padding: 7px 10px;
-                font-size: 1rem;
-                font-weight: bold;
-                cursor: pointer;
-            }
-            .auth-form button[type="submit"]:hover {
-                background: #ff5722;
-            }
-            .auth-error {
-                color: #d32f2f;
-                font-size: 0.98rem;
-                margin-bottom: 0.6rem;
-                text-align: center;
-            }
-            @keyframes scaleIn {
-                from {
-                    opacity: 0;
-                    transform: scale(0.8);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-            }
-            @media (max-width: 1000px) {
-                .page {
-                    max-width: 98vw;
-                    padding: 1.2rem 0.6rem 0.7rem 0.6rem;
-                }
-            }
-            @media (max-width: 600px) {
-                .page {
-                    padding: 0.8rem 0.09em 0.4em 0.09em;
-                }
-                table,
-                th,
-                td {
-                    font-size: 0.96em;
-                }
-                .bottom-nav {
-                    height: 64px;
-                }
-                .img-preview {
-                    max-width: 90vw;
-                }
-            }
-            .not-admin-msg {
-                display: none;
-                color: #d32f2f;
-                font-weight: 600;
-                margin: 1em 0;
-            }
-        </style>
-    </head>
-    <body>
-        <header>
-            <span id="header-title">🍔 Menu</span>
-            <div class="auth-bar" id="auth-bar">
-                <span id="auth-user"></span>
-                <button id="auth-btn">Sign In</button>
-            </div>
-        </header>
-        <main>
-            <!-- Menu Item Page -->
-            <section class="page" id="menu-page">
-                <h2>Add Menu Item</h2>
-                <div class="not-admin-msg" id="not-admin-msg">
-                    Only admins can add menu items.
-                </div>
-                <form id="menu-form" autocomplete="off">
-                    <div class="form-row">
-                        <label for="title">Title *</label>
-                        <input type="text" id="title" required maxlength="64" />
-                    </div>
-                    <div class="form-row">
-                        <label for="desc">Description *</label>
-                        <textarea id="desc" required maxlength="200"></textarea>
-                    </div>
-                    <div class="form-row">
-                        <label for="price">Price (₵) *</label>
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            id="price"
-                            required
-                        />
-                    </div>
-                    <div class="form-row">
-                        <label for="img">Image *</label>
-                        <input type="file" id="img" accept="image/*" required />
-                        <img
-                            id="img-preview"
-                            class="img-preview"
-                            style="display: none"
-                        />
-                    </div>
-                    <input type="submit" value="Add Menu Item" />
-                    <div class="status-message" id="add-status"></div>
-                    <div class="error-message" id="add-error"></div>
-                </form>
-            </section>
-            <!-- Orders Page -->
-            <section class="page" id="orders-page">
-                <h2>Customer Orders</h2>
-                <button id="refresh-orders">Refresh Orders</button>
-                <div class="status-message" id="orders-status"></div>
-                <table id="orders-table">
-                    <thead>
-                        <tr>
-                            <th>Date<br />Status<br />Delivered</th>
-                            <th>Customer</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orders-tbody">
-                        <tr>
-                            <td
-                                colspan="4"
-                                style="text-align: center; color: #bbb"
-                            >
-                                Loading...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-            <!-- AUTH MODAL -->
-            <div class="auth-modal" id="auth-modal">
-                <div class="auth-box">
-                    <h3 style="margin: 0 0 0.6em 0; color: #ff7043">
-                        Admin Sign In
-                    </h3>
-                    <form id="signin-form" class="auth-form">
-                        <input
-                            type="email"
-                            id="signin-email"
-                            placeholder="Email"
-                            required
-                            autocomplete="username"
-                        />
-                        <input
-                            type="password"
-                            id="signin-password"
-                            placeholder="Password"
-                            required
-                            autocomplete="current-password"
-                        />
-                        <div class="auth-error" id="signin-error"></div>
-                        <button type="submit">Sign In</button>
-                    </form>
-                    <button
-                        id="close-auth"
-                        style="background: #eee; color: #444; margin-top: 0.6em"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        </main>
-        <nav class="bottom-nav">
-            <button class="bottom-nav-btn active" id="nav-menu" type="button">
-                🍔 Menu
-            </button>
-            <button class="bottom-nav-btn" id="nav-orders" type="button">
-                📦 Orders
-            </button>
-        </nav>
-        <script>
-            // === CONFIGURE SUPABASE ===
-            const SUPABASE_URL = "https://soxfqyzgbkbxpjkvxvvi.supabase.co";
-            const SUPABASE_KEY =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveGZxeXpnYmtieHBqa3Z4dnZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzNjQ1MTAsImV4cCI6MjA2Mzk0MDUxMH0.kxV61t2xqauvO-wYyUMIrmNUKow99kjG09JdGXjsO6c";
-            const supabase = window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_KEY
-            );
-
-            // === ADMIN EMAILS ===
-            const ADMIN_EMAILS = [
-                "stevejupiter4@gmail.com",
-                "kellyklivert@gmail.com"
-            ];
-
-            let currentUser = null;
-
-            function isAdmin() {
-                return currentUser && ADMIN_EMAILS.includes(currentUser.email);
-            }
-
-            function updateAuthUI() {
-                const userSpan = document.getElementById("auth-user");
-                const authBtn = document.getElementById("auth-btn");
-                const menuForm = document.getElementById("menu-form");
-                const notAdminMsg = document.getElementById("not-admin-msg");
-                if (currentUser) {
-                    userSpan.textContent = currentUser.email;
-                    authBtn.textContent = "Logout";
-                    if (isAdmin()) {
-                        menuForm.style.display = "block";
-                        notAdminMsg.style.display = "none";
-                    } else {
-                        menuForm.style.display = "none";
-                        notAdminMsg.style.display = "block";
-                    }
-                } else {
-                    userSpan.textContent = "";
-                    authBtn.textContent = "Sign In";
-                    menuForm.style.display = "none";
-                    notAdminMsg.style.display = "none";
-                }
-            }
-
-            document
-                .getElementById("auth-btn")
-                .addEventListener("click", async () => {
-                    if (currentUser) {
-                        await supabase.auth.signOut();
-                        currentUser = null;
-                        updateAuthUI();
-                    } else {
-                        openAuthModal();
-                    }
-                });
-
-            function openAuthModal() {
-                document.getElementById("auth-modal").classList.add("active");
-                document.getElementById("signin-error").textContent = "";
-                document.getElementById("signin-form").reset();
-            }
-            function closeAuthModal() {
-                document
-                    .getElementById("auth-modal")
-                    .classList.remove("active");
-            }
-            document
-                .getElementById("close-auth")
-                .addEventListener("click", closeAuthModal);
-
-            document
-                .getElementById("signin-form")
-                .addEventListener("submit", async function (e) {
-                    e.preventDefault();
-                    const email = document.getElementById("signin-email").value;
-                    const password =
-                        document.getElementById("signin-password").value;
-                    const errorDiv = document.getElementById("signin-error");
-                    errorDiv.textContent = "";
-                    const { data, error } =
-                        await supabase.auth.signInWithPassword({
-                            email,
-                            password
-                        });
-                    if (error) {
-                        errorDiv.textContent = error.message;
-                    } else {
-                        currentUser = data.user;
-                        closeAuthModal();
-                        updateAuthUI();
-                    }
-                });
-
-            // --- Navigation ---
-            const pages = {
-                menu: document.getElementById("menu-page"),
-                orders: document.getElementById("orders-page")
-            };
-            const navBtns = {
-                menu: document.getElementById("nav-menu"),
-                orders: document.getElementById("nav-orders")
-            };
-            function showPage(page) {
-                for (const key in pages) {
-                    pages[key].classList.remove("active");
-                    navBtns[key].classList.remove("active");
-                }
-                pages[page].classList.add("active");
-                navBtns[page].classList.add("active");
-                document.getElementById("header-title").textContent =
-                    page === "menu" ? "🍔 Menu" : "📦 Orders";
-            }
-            navBtns.menu.addEventListener("click", () => showPage("menu"));
-            navBtns.orders.addEventListener("click", () => showPage("orders"));
-            // Default to menu
-            showPage("menu");
-
-            // --- Menu Form: Image Preview ---
-            document
-                .getElementById("img")
-                .addEventListener("change", function (e) {
-                    const file = e.target.files[0];
-                    const preview = document.getElementById("img-preview");
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function (evt) {
-                            preview.src = evt.target.result;
-                            preview.style.display = "block";
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        preview.style.display = "none";
-                    }
-                });
-
-            // --- Menu Form Submission ---
-            document
-                .getElementById("menu-form")
-                .addEventListener("submit", async function (e) {
-                    e.preventDefault();
-                    if (!isAdmin()) {
-                        document.getElementById("add-error").textContent =
-                            "You must be an admin to add menu items.";
-                        return;
-                    }
-                    const title = document.getElementById("title").value.trim();
-                    const desc = document.getElementById("desc").value.trim();
-                    const price = parseFloat(
-                        document.getElementById("price").value
-                    );
-                    const imgInput = document.getElementById("img");
-                    const status = document.getElementById("add-status");
-                    const error = document.getElementById("add-error");
-                    status.textContent = "";
-                    error.textContent = "";
-
-                    if (!imgInput.files[0]) {
-                        error.textContent = "Image is required.";
-                        return;
-                    }
-                    const file = imgInput.files[0];
-                    const fileExt = file.name.split(".").pop();
-                    const filePath = `menu/${Date.now()}-${Math.random()
-                        .toString(36)
-                        .substr(2, 6)}.${fileExt}`;
-
-                    // Upload image to Supabase Storage
-                    let { data: imgData, error: imgError } =
-                        await supabase.storage
-                            .from("menu-images")
-                            .upload(filePath, file);
-
-                    if (imgError) {
-                        error.textContent =
-                            "Image upload failed: " + imgError.message;
-                        return;
-                    }
-
-                    // Get public URL
-                    const { data: publicUrlData } = supabase.storage
-                        .from("menu-images")
-                        .getPublicUrl(filePath);
-                    const imgUrl = publicUrlData.publicUrl;
-
-                    // Insert menu item into Supabase table
-                    const { error: insertError } = await supabase
-                        .from("menu_items")
-                        .insert([
-                            {
-                                title,
-                                desc: desc,
-                                price,
-                                img: imgUrl
-                            }
-                        ]);
-                    if (insertError) {
-                        error.textContent =
-                            "Failed to add menu item: " + insertError.message;
-                        return;
-                    }
-                    status.textContent = "Menu item added successfully!";
-                    this.reset();
-                    document.getElementById("img-preview").style.display =
-                        "none";
-                    setTimeout(() => {
-                        status.textContent = "";
-                    }, 1800);
-                });
-
-            // --- Orders Table ---
-            async function loadOrders() {
-                const tbody = document.getElementById("orders-tbody");
-                const status = document.getElementById("orders-status");
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#bbb">Loading...</td></tr>`;
-                status.textContent = "";
-                let { data: orders, error } = await supabase
-                    .from("orders")
-                    .select("*")
-                    .order("created_at", { ascending: false });
-                if (error) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="color:#d32f2f">Failed to load orders.</td></tr>`;
-                    status.textContent = error.message;
-                    return;
-                }
-                if (!orders || orders.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="color:#aaa">No orders found.</td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = "";
-                for (const order of orders) {
-                    const date = new Date(order.created_at).toLocaleString();
-                    const orderStatus = order.status ? order.status : "pending";
-                    // Username is the part before '@'
-                    let username = "";
-                    if (
-                        order.email &&
-                        typeof order.email === "string" &&
-                        order.email.includes("@")
-                    ) {
-                        username = order.user_display_name;
-                    }
-                    const customer = `<div style="font-weight:bold;font-size:0.7em;">${
-                        username ? username : "???"
-                    }</div>
-                        <span class="order-email">${order.email || "???"}</span>
-                        <span class="phone">${order.user_phone}</span>
-                        `;
-                    let itemsHtml = "<ul class='order-items-list'>";
-                    let total = 0;
-                    try {
-                        const items =
-                            typeof order.items === "string"
-                                ? JSON.parse(order.items)
-                                : order.items;
-                        for (const item of items) {
-                            itemsHtml += `<li><span>${item.title}</span> x ${item.qty} - ₵${item.price}</li>`;
-                            total += item.price * item.qty;
-                        }
-                        itemsHtml += "</ul>";
-                    } catch (err) {
-                        itemsHtml =
-                            "<span style='color:#d32f2f'>Invalid order data</span>";
-                    }
-                    const isDelivered = order.status === "delivered";
-                    tbody.innerHTML += `<tr data-order-id="${order.id}">
+            itemsHtml += "</ul>";
+          } catch (err) {
+            itemsHtml = "<span style='color:#d32f2f'>Invalid order data</span>";
+          }
+          const isDelivered = order.status === "delivered";
+          tbody.innerHTML += `<tr data-order-id="${order.id}">
                         <td>
                           <div>${date}</div>
                           <div class="order-status" style="font-size:0.96em;color:${
-                              orderStatus === "delivered"
-                                  ? "#1b9625"
-                                  : "#ff7043"
+                            orderStatus === "delivered" ? "#1b9625" : "#ff7043"
                           };font-weight:600;margin-top:4px;">
                             ${orderStatus}
                           </div>
                           <div style="margin-top: 7px;">
                               <input type="checkbox" class="delivered-checkbox" ${
-                                  isDelivered ? "checked disabled" : ""
+                                isDelivered ? "checked disabled" : ""
                               } ${
-                                  isDelivered
-                                      ? "title='Already delivered'"
-                                      : "title='Mark as delivered'"
-                              } />
+            isDelivered
+              ? "title='Already delivered'"
+              : "title='Mark as delivered'"
+          } />
                           </div>
                         </td>
                         <td>${customer}</td>
                         <td>${itemsHtml}</td>
                         <td class="order-total">₵${total.toFixed(2)}</td>
                     </tr>`;
-                }
-                // Attach event listeners for delivered checkboxes
-                document
-                    .querySelectorAll(".delivered-checkbox")
-                    .forEach(box => {
-                        box.addEventListener("change", async function () {
-                            const tr = this.closest("tr");
-                            const orderId = tr.getAttribute("data-order-id");
-                            if (this.checked) {
-                                this.disabled = true;
-                                tr.querySelector(".order-status").textContent =
-                                    "delivered";
-                                tr.querySelector(".order-status").style.color =
-                                    "#1b9625";
-                                // Update Supabase order status
-                                const { error } = await supabase
-                                    .from("orders")
-                                    .update({ status: "delivered" })
-                                    .eq("id", orderId);
-                                if (error) {
-                                    status.textContent =
-                                        "Failed to update status: " +
-                                        error.message;
-                                    this.disabled = false;
-                                    this.checked = false;
-                                    tr.querySelector(
-                                        ".order-status"
-                                    ).textContent = "pending";
-                                    tr.querySelector(
-                                        ".order-status"
-                                    ).style.color = "#ff7043";
-                                } else {
-                                    status.textContent =
-                                        "Order marked as delivered!";
-                                    setTimeout(() => {
-                                        status.textContent = "";
-                                    }, 1200);
-                                }
-                            }
-                        });
-                    });
+        }
+        // Attach event listeners for delivered checkboxes
+        document.querySelectorAll(".delivered-checkbox").forEach((box) => {
+          box.addEventListener("change", async function () {
+            const tr = this.closest("tr");
+            const orderId = tr.getAttribute("data-order-id");
+            if (this.checked) {
+              this.disabled = true;
+              tr.querySelector(".order-status").textContent = "delivered";
+              tr.querySelector(".order-status").style.color = "#1b9625";
+              // Update Supabase order status
+              const { error } = await supabase
+                .from("orders")
+                .update({ status: "delivered" })
+                .eq("id", orderId);
+              if (error) {
+                status.textContent =
+                  "Failed to update status: " + error.message;
+                this.disabled = false;
+                this.checked = false;
+                tr.querySelector(".order-status").textContent = "pending";
+                tr.querySelector(".order-status").style.color = "#ff7043";
+              } else {
+                status.textContent = "Order marked as delivered!";
+                setTimeout(() => {
+                  status.textContent = "";
+                }, 1200);
+              }
             }
-            document
-                .getElementById("refresh-orders")
-                .addEventListener("click", loadOrders);
+          });
+        });
+      }
+      document
+        .getElementById("refresh-orders")
+        .addEventListener("click", loadOrders);
 
-            // --- On Load: Auth & Initial Data ---
-            async function init() {
-                // Auth state
-                const {
-                    data: { user }
-                } = await supabase.auth.getUser();
-                currentUser = user;
-                updateAuthUI();
-                // Listen for auth changes
-                supabase.auth.onAuthStateChange((event, session) => {
-                    currentUser = session?.user || null;
-                    updateAuthUI();
-                });
-                // Load orders
-                loadOrders();
-            }
-            init();
-        </script>
-    </body>
+      // --- On Load: Auth & Initial Data ---
+      async function init() {
+        // Auth state
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        currentUser = user;
+        updateAuthUI();
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange((event, session) => {
+          currentUser = session?.user || null;
+          updateAuthUI();
+        });
+        // Load orders
+        loadOrders();
+      }
+      init();
+    </script>
+  </body>
 </html>
